@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        #wrap{
+            width: 1290px;
+            margin: 0 auto;
+            padding-top: 30px;
+        }
+        ul{
+            width: 250px;
+            margin-right: 10px;
+            float: left;
+            list-style: none;
+        }
+        ul>li{
+            height: 50px;
+            background: url("image/default.gif") no-repeat center #ccc;
+            margin-bottom: 10px;
+        }
+        ul:last-of-type{
+            margin-right: 0;
+        }
+        img{
+            width: 100%;
+        }
+        a{
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 50%;
+            background: #00aaee;
+            color: #fff;
+            font-size: 12px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="wrap">
+    <ul></ul>
+    <ul></ul>
+    <ul></ul>
+    <ul></ul>
+    <ul></ul>
+    <a href="javascript:;">返回</a>
+</div>
+</body>
+</html>
+<script src="utils.js"></script>
+<script>
+    var data=null;
+    var wrap=document.getElementById("wrap");
+    var oUl=wrap.getElementsByTagName("ul");
+    var oImg=wrap.getElementsByTagName("img");
+    var scrollBottom=null;
+    var btn=wrap.getElementsByTagName("a")[0];
+    var timer=null;
+    var bOk=false;
+    /**
+     * getData:获取json数据
+     */
+    function getData() {
+        var xhr=new XMLHttpRequest();
+        xhr.open("GET","json/data.txt");
+        xhr.onreadystatechange=function () {
+            if(xhr.readyState==4 &&/^2\d{2}$/.test(xhr.status)){
+                data=utils.jsonParse(xhr.responseText);
+                li50();
+            }
+        };
+        xhr.send();
+    }
+
+    getData();
+
+    /**
+     * createLi:创建li
+     */
+    function createLi() {
+        var li=document.createElement("li");
+        li.style.height=utils.rnd(80,200)+"px";
+        var img=document.createElement("img");
+        img.realSrc=data[utils.rnd(0,11)].imgSrc;
+        li.appendChild(img);
+        showImg();
+        return li;
+    }
+    function li50() {
+        var ary=utils.makeArray(oUl);
+        for(var i=0;i<50;i++){
+            var li=createLi();
+            ary.sort(function (a, b) {
+                return a.offsetHeight-b.offsetHeight;
+            });
+            ary[0].appendChild(li);
+        }
+    }
+
+
+    /**
+     * 
+     */
+    function showImg() {
+        scrollBottom=utils.win("clientHeight")+utils.win("scrollTop");
+        for(var i=0;i<oImg.length;i++){
+            if(utils.offset(oImg[i]).top+oImg[i].offsetHeight<scrollBottom){
+                lazyImg(oImg[i]);
+            }
+        }
+    }
+
+    function lazyImg(img) {
+        if(img.loaded){
+            return;
+        }
+        var aImg=new Image;
+        aImg.src=img.realSrc;
+        aImg.onload=function () {
+            img.src=this.src;
+            img.parentNode.style.height=img.offsetHeight+"px";
+            img.loaded=true;
+        };
+        aImg.onerror=function () {
+            img.src="image/error.jpg";
+            img.parentNode.style.height=img.offsetHeight+"px";
+            img.loaded=true;
+        };
+        aImg=null;
+    }
+
+    window.onscroll=function () {
+        if(scrollBottom+100>=document.body.scrollHeight){
+            li50();
+        }
+        showImg();
+        if(utils.win("scrollTop")>=utils.win("clientHeight")){
+            btn.style.display="block";
+        }else {
+            btn.style.display="none";
+        }
+        if(bOk){
+            clearInterval(timer);
+        }
+        bOk=true;
+
+    };
+
+    btn.onclick=function () {
+        var duration=utils.win("scrollTop");
+        var time=500;
+        var interval=30;
+        var step=(duration/time)*interval;
+        timer=setInterval(function () {
+            duration-=step;
+            if(duration<=0){
+                duration=0;
+                clearInterval(timer);
+            }
+            utils.win("scrollTop",duration);
+            bOk=false;
+        },interval)
+    }
+</script>
